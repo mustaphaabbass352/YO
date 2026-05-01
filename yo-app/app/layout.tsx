@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Syne, DM_Sans } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/lib/auth";
+import { Providers } from "./providers";
 
 const syne = Syne({
   variable: "--font-display",
@@ -27,12 +27,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body
-        className={`${syne.variable} ${dmSans.variable} antialiased bg-[#0a0a0a] text-white noise`}
-      >
-        <AuthProvider>
+      <body className={`${syne.variable} ${dmSans.variable} antialiased bg-[#0a0a0a] text-white`}>
+        <Providers>
           {children}
-        </AuthProvider>
+        </Providers>
       </body>
     </html>
   );
