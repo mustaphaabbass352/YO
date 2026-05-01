@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Camera } from "lucide-react"
+import { useAuth } from "@/lib/auth"
 
 const pulseAnimation = `
   @keyframes pulse {
@@ -15,7 +16,15 @@ const pulseAnimation = `
 
 export default function SignupPage() {
   const router = useRouter()
+  const { signUp } = useAuth()
+  const [fullName, setFullName] = useState("")
+  const [phone, setPhone] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -25,9 +34,24 @@ export default function SignupPage() {
     }
   }
 
-  const handleSignup = () => {
-    localStorage.setItem("isLoggedIn", "true")
-    router.push("/chats")
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    
+    if (password !== confirmPassword) {
+      setError("Passwords do not match")
+      return
+    }
+    
+    setLoading(true)
+    try {
+      await signUp(email, password, fullName, phone)
+      router.push("/chats")
+    } catch (err: any) {
+      setError(err.message || "Failed to sign up")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -85,39 +109,61 @@ export default function SignupPage() {
             />
           </div>
 
-          <div className="space-y-4">
+          <form onSubmit={handleSignup} className="space-y-4">
             <input
               type="text"
               placeholder="Full name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
               className="w-full bg-[#1a1a1a] border border-[#1f1f1f] text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FFD600]"
               style={{ fontFamily: "var(--font-body)" }}
             />
             <input
               type="tel"
               placeholder="Phone number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+              className="w-full bg-[#1a1a1a] border border-[#1f1f1f] text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FFD600]"
+              style={{ fontFamily: "var(--font-body)" }}
+            />
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
               className="w-full bg-[#1a1a1a] border border-[#1f1f1f] text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FFD600]"
               style={{ fontFamily: "var(--font-body)" }}
             />
             <input
               type="password"
               placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
               className="w-full bg-[#1a1a1a] border border-[#1f1f1f] text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FFD600]"
               style={{ fontFamily: "var(--font-body)" }}
             />
             <input
               type="password"
               placeholder="Confirm password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
               className="w-full bg-[#1a1a1a] border border-[#1f1f1f] text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FFD600]"
               style={{ fontFamily: "var(--font-body)" }}
             />
-          </div>
-
-          <button
-            onClick={handleSignup}
-            className="w-full mt-6 bg-[#FFD600] text-black font-bold rounded-full py-3 hover:scale-[1.02] hover:brightness-110 transition-all duration-200"
-          >
-            Create Account
-          </button>
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full mt-6 bg-[#FFD600] text-black font-bold rounded-full py-3 hover:scale-[1.02] hover:brightness-110 transition-all duration-200 disabled:opacity-50"
+            >
+              {loading ? "Creating account..." : "Create Account"}
+            </button>
+          </form>
 
           <p className="text-center mt-6 text-[#888888]" style={{ fontFamily: "var(--font-body)" }}>
             Already have an account?{" "}

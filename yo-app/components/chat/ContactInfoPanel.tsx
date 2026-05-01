@@ -1,7 +1,6 @@
 "use client"
 
-import { Contact } from "@/lib/types"
-import { CONVERSATIONS } from "@/lib/mock-data"
+import { useProfile } from "@/lib/supabase-utils"
 import Avatar from "@/components/ui/Avatar"
 
 interface ContactInfoPanelProps {
@@ -9,26 +8,30 @@ interface ContactInfoPanelProps {
 }
 
 export default function ContactInfoPanel({ conversationId }: ContactInfoPanelProps) {
-  const conversation = CONVERSATIONS.find((c) => c.id === conversationId)
-  if (!conversation) return null
+  const { profile: contact } = useProfile(conversationId)
 
-  const contact = conversation.contact
+  if (!contact) return null
 
   return (
     <div className="h-full flex flex-col bg-[#111111] border-l border-[#1f1f1f] p-6">
       <div className="flex flex-col items-center mb-8">
-        <Avatar src={contact.avatar} alt={contact.name} size="xl" isOnline={contact.isOnline} />
+        <Avatar 
+          src={contact.avatar_url || ""} 
+          alt={contact.full_name || "User"} 
+          size="xl" 
+          isOnline={contact.is_online || false} 
+        />
         <h2 
           className="text-xl font-[700] text-white mt-4"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          {contact.name}
+          {contact.full_name || "User"}
         </h2>
         <p 
           className="text-sm text-[#888888] mt-1"
           style={{ fontFamily: "var(--font-body)" }}
         >
-          {contact.phone}
+          {contact.phone || ""}
         </p>
       </div>
 
@@ -43,7 +46,7 @@ export default function ContactInfoPanel({ conversationId }: ContactInfoPanelPro
           className="text-sm text-white"
           style={{ fontFamily: "var(--font-body)" }}
         >
-          {contact.bio}
+          {contact.bio || "Available"}
         </p>
       </div>
 

@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import { ChevronLeft, Send } from "lucide-react"
-import { Conversation } from "@/lib/types"
-import { CONVERSATIONS, CURRENT_USER } from "@/lib/mock-data"
+import { useAuth } from "@/lib/auth"
+import { useMessages, useProfile, sendMessage } from "@/lib/supabase-utils"
 import Avatar from "@/components/ui/Avatar"
 import MessageBubble from "@/components/chat/MessageBubble"
 import TypingIndicator from "@/components/chat/TypingIndicator"
@@ -15,30 +15,52 @@ interface ChatWindowProps {
 }
 
 export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
+  const { user } = useAuth()
+  const { profile: contact } = useProfile(conversationId)
+  const { messages, loading } = useMessages(user?.id || "", conversationId)
   const [inputText, setInputText] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const conversation = CONVERSATIONS.find((c) => c.id === conversationId)
-  if (!conversation) return null
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [conversationId, conversation.messages.length])
+  }, [conversationId, messages.length])
 
-  const handleSend = () => {
-    if (!inputText.trim()) return
+  const handleSend = async () => {
+    if (!inputText.trim() || !user) return
     
     setIsSending(true)
+    const text = inputText
     setInputText("")
-    setTimeout(() => setIsSending(false), 300)
+    
+    try {
+      await sendMessage(user.id, conversationId, text)
+    } catch (error) {
+      console.error("Failed to send message:", error)
+      setInputText(text)
+    } finally {
+      setTimeout(() => setIsSending(false), 300)
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       handleSend()
     }
+  }
+
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp)
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  }
+
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center bg-[#0a0a0a]">
+        <div className="text-xl text-[#FFD600]">Loading...</div>
+      </div>
+    )
   }
 
   return (
@@ -49,30 +71,34 @@ export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) 
             <ChevronLeft className="w-6 h-6 text-white" />
           </button>
         )}
-        <Avatar src={conversation.contact.avatar} alt={conversation.contact.name} isOnline={conversation.contact.isOnline} />
+        <Avatar 
+          src={contact?.avatar_url || ""} 
+          alt={contact?.full_name || "User"} 
+          isOnline={contact?.is_online || false} 
+        />
         <div>
           <h3 
             className="text-sm font-medium text-white"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            {conversation.contact.name}
+            {contact?.full_name || "User"}
           </h3>
           <p 
             className="text-xs text-[#888888]"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            {conversation.contact.isOnline ? "Online" : "Offline"}
+            {contact?.is_online ? "Online" : "Offline"}
           </p>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
-        {conversation.messages.map((msg) => (
+        {messages.map((msg) => (
           <MessageBubble
             key={msg.id}
-            text={msg.text}
-            timestamp={msg.timestamp}
-            isSent={msg.senderId === CURRENT_USER.id}
+            text={msg.content}
+            timestamp={formatTime(msg.created_at)}
+            isSent={msg.sender_id === user?.id}
           />
         ))}
         {isTyping && (

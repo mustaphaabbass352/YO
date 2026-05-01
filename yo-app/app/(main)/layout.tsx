@@ -4,6 +4,7 @@ import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Sidebar from "@/components/layout/Sidebar"
 import BottomNav from "@/components/layout/BottomNav"
+import { useAuth } from "@/lib/auth"
 
 export default function MainLayout({
   children,
@@ -11,13 +12,21 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter()
+  const { user, loading } = useAuth()
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem("isLoggedIn")
-    if (isLoggedIn !== "true") {
+    if (!loading && !user) {
       router.push("/login")
     }
-  }, [router])
+  }, [user, loading, router])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#0a0a0a]">
+        <div className="text-2xl text-[#FFD600] font-bold">Loading...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-row h-screen w-full overflow-hidden bg-[#0a0a0a]">

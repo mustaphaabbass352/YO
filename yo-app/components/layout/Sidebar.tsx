@@ -1,6 +1,7 @@
 "use client"
 
-import { CURRENT_USER, NOTIFICATIONS } from "@/lib/mock-data"
+import { useAuth } from "@/lib/auth"
+import { useProfile } from "@/lib/supabase-utils"
 import { MessageCircle, Users, Bell, Settings, LogOut } from "lucide-react"
 import { motion } from "framer-motion"
 import { usePathname, useRouter } from "next/navigation"
@@ -8,6 +9,8 @@ import { usePathname, useRouter } from "next/navigation"
 export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
+  const { user, signOut } = useAuth()
+  const { profile } = useProfile(user?.id || "")
 
   const navItems = [
     { label: "Chats", icon: MessageCircle, href: "/chats" },
@@ -16,10 +19,8 @@ export default function Sidebar() {
     { label: "Settings", icon: Settings, href: "/settings" },
   ]
 
-  const unreadNotificationsCount = NOTIFICATIONS.filter(n => !n.read).length
-
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn")
+  const handleLogout = async () => {
+    await signOut()
     router.push("/login")
   }
 
@@ -45,7 +46,6 @@ export default function Sidebar() {
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href
-          const isNotifications = item.href === "/notifications"
 
           return (
             <div key={item.href} className="relative group">
@@ -61,10 +61,6 @@ export default function Sidebar() {
                 <Icon size={20} />
                 <span className="text-sm font-medium">{item.label}</span>
               </button>
-              
-              {isNotifications && unreadNotificationsCount > 0 && (
-                <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
-              )}
 
               <span className="absolute left-full ml-3 top-1/2 -translate-y-1/2 bg-[#1a1a1a] text-white text-xs px-2 py-1 rounded-lg border border-[#1f1f1f] whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                 {item.label}
@@ -79,15 +75,17 @@ export default function Sidebar() {
       <div className="p-4 border-t border-[#1f1f1f]">
         <div className="flex items-center gap-3">
           <img 
-            src={CURRENT_USER.avatar} 
-            alt={CURRENT_USER.name}
+            src={profile?.avatar_url || "https://ui-avatars.com/api/?name=User&background=FFD600&color=000&bold=true"} 
+            alt={profile?.full_name || "User"}
             className="w-10 h-10 rounded-full object-cover"
           />
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-white" style={{ fontFamily: "var(--font-display)" }}>
-              {CURRENT_USER.name}
+              {profile?.full_name || "User"}
             </span>
-            <div className="w-2 h-2 bg-green-500 rounded-full" />
+            {profile?.is_online && (
+              <div className="w-2 h-2 bg-green-500 rounded-full" />
+            )}
           </div>
           <motion.button
             onClick={handleLogout}

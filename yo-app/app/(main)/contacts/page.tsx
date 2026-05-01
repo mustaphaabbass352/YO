@@ -4,22 +4,31 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { ChevronLeft, MessageCircle } from "lucide-react"
-import { CONTACTS } from "@/lib/mock-data"
+import { useProfiles } from "@/lib/supabase-utils"
 import Avatar from "@/components/ui/Avatar"
 import SearchBar from "@/components/ui/SearchBar"
 
 export default function ContactsPage() {
   const router = useRouter()
+  const { profiles, loading } = useProfiles()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null)
 
-  const filteredContacts = CONTACTS.filter((contact) =>
-    contact.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredContacts = profiles.filter((contact) =>
+    (contact.full_name || "").toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   const selectedContact = selectedContactId 
-    ? CONTACTS.find((c) => c.id === selectedContactId) 
+    ? profiles.find((c) => c.id === selectedContactId) 
     : null
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full bg-[#0a0a0a]">
+        <div className="text-xl text-[#FFD600]">Loading...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="h-full flex flex-row overflow-hidden">
@@ -59,19 +68,23 @@ export default function ContactsPage() {
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Avatar src={contact.avatar} alt={contact.name} isOnline={contact.isOnline} />
+                  <Avatar 
+                    src={contact.avatar_url || ""} 
+                    alt={contact.full_name || "User"} 
+                    isOnline={contact.is_online || false} 
+                  />
                   <div className="flex-1 min-w-0">
                     <h3 
                       className="text-sm font-medium text-white truncate"
                       style={{ fontFamily: "var(--font-display)" }}
                     >
-                      {contact.name}
+                      {contact.full_name || "User"}
                     </h3>
                     <p 
                       className="text-sm text-[#888888] truncate"
                       style={{ fontFamily: "var(--font-body)" }}
                     >
-                      {contact.bio}
+                      {contact.bio || "Available"}
                     </p>
                   </div>
                 </div>
@@ -91,19 +104,24 @@ export default function ContactsPage() {
             >
               <ChevronLeft className="w-6 h-6 text-white" />
             </button>
-            <Avatar src={selectedContact.avatar} alt={selectedContact.name} size="lg" isOnline={selectedContact.isOnline} />
+            <Avatar 
+              src={selectedContact.avatar_url || ""} 
+              alt={selectedContact.full_name || "User"} 
+              size="lg" 
+              isOnline={selectedContact.is_online || false} 
+            />
             <div>
               <h3 
                 className="text-lg font-[600] text-white"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                {selectedContact.name}
+                {selectedContact.full_name || "User"}
               </h3>
               <p 
                 className="text-sm text-[#888888]"
                 style={{ fontFamily: "var(--font-body)" }}
               >
-                {selectedContact.phone}
+                {selectedContact.phone || ""}
               </p>
             </div>
           </div>
@@ -120,7 +138,7 @@ export default function ContactsPage() {
                 className="text-sm text-white"
                 style={{ fontFamily: "var(--font-body)" }}
               >
-                {selectedContact.bio}
+                {selectedContact.bio || "Available"}
               </p>
             </div>
 
