@@ -54,9 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         data: { full_name: fullName, phone },
       },
     })
-
     if (error) throw error
-
     if (data.user) {
       const { createProfile } = await import("./supabase-utils")
       await createProfile(data.user.id, fullName, phone)
@@ -64,11 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
   }
 
@@ -76,7 +70,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const appVerifier = new RecaptchaVerifier(firebaseAuth, "recaptcha-container", {
       size: "invisible",
     })
-
     const confirmationResult = await signInWithPhoneNumber(firebaseAuth, phoneNumber, appVerifier)
     return { verificationId: confirmationResult.verificationId }
   }
@@ -84,25 +77,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const verifyOtp = async (verificationId: string, otp: string, fullName?: string) => {
     const credential = PhoneAuthProvider.credential(verificationId, otp)
     const firebaseResult = await signInWithCredential(firebaseAuth, credential)
-    
     const idToken = await firebaseResult.user.getIdToken()
-    
     const { data, error } = await supabase.auth.signInWithIdToken({
       provider: "firebase",
       token: idToken,
     })
-
     if (error) throw error
-
     if (data.user && fullName) {
       const { createProfile } = await import("./supabase-utils")
-      
       const { data: existingProfile } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", data.user.id)
         .single()
-      
       if (!existingProfile) {
         await createProfile(data.user.id, fullName, firebaseResult.user.phoneNumber || "")
       }
@@ -116,16 +103,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      firebaseUser, 
-      loading, 
-      signUp, 
-      signIn, 
-      signInWithPhone, 
-      verifyOtp, 
-      signOut 
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        firebaseUser,
+        loading,
+        signUp,
+        signIn,
+        signInWithPhone,
+        verifyOtp,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )
