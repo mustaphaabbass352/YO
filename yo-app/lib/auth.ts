@@ -102,19 +102,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error
   }
 
+  const contextValue = {
+    user,
+    firebaseUser,
+    loading,
+    signUp,
+    signIn,
+    signInWithPhone,
+    verifyOtp,
+    signOut,
+  }
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        firebaseUser,
-        loading,
-        signUp,
-        signIn,
-        signInWithPhone,
-        verifyOtp,
-        signOut,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   )
