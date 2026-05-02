@@ -170,7 +170,7 @@ export async function sendMessage(senderId: string, receiverId: string, content:
       receiver_id: receiverId,
       content,
       read: false,
-    })
+    } as any)
     .select()
   return { data, error }
 }
@@ -188,7 +188,7 @@ export async function createProfile(
     avatar_url: avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=FFD600&color=000&bold=true`,
     bio: "Available",
     is_online: true,
-  })
+  } as any)
   return { data, error }
 }
 
