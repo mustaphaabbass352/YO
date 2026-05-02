@@ -1,30 +1,30 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth"
 
 export default function Home() {
   const router = useRouter()
-  const [isClient, setIsClient] = useState(false)
+  const { user, loading } = useAuth()
 
   useEffect(() => {
-    setIsClient(true)
-  }, [])
-
-  useEffect(() => {
-    if (!isClient) return
-    
-    const isLoggedIn = localStorage.getItem("isLoggedIn")
-    if (isLoggedIn === "true") {
-      router.push("/chats")
-    } else {
-      router.push("/login")
+    if (!loading) {
+      if (user) {
+        router.push("/chats")
+      } else {
+        router.push("/login")
+      }
     }
-  }, [isClient, router])
+  }, [user, loading, router])
 
-  return (
-    <div className="min-h-screen w-full bg-[#0a0a0a] flex items-center justify-center">
-      <div className="text-2xl text-[#FFD600] font-bold">Loading...</div>
-    </div>
-  )
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full bg-[#0a0a0a] flex items-center justify-center">
+        <div className="text-2xl text-[#FFD600] font-bold">Loading...</div>
+      </div>
+    )
+  }
+
+  return null
 }
